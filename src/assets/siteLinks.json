@@ -5,9 +5,10 @@
     "link": "https://bk.682000.xyz/"
   },
   {
-    "icon": "Cloud",
-    "name": "网盘",
-    "link": "https://pan.imsyy.top/"
+    "icon": "Book",
+    "name": "笔记",
+    "link": "https://bj.682000.xyz/"
+
   },
   {
     "icon": "CompactDisc",
@@ -20,9 +21,9 @@
     "link": "https://home.682000.xyz/"
   },
   {
-    "icon": "Book",
-    "name": "笔记",
-    "link": "https://bj.682000.xyz/"
+    "icon": "Cloud",
+    "name": "网盘",
+    "link": "https://pan.imsyy.top/"
   },
   {
     "icon": "Fire",
