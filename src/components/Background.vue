@@ -24,28 +24,20 @@
 </template>
 
 <script setup>
-// 补全所有必要的导入
-import { ref, watch, onMounted, onBeforeUnmount, h } from "vue";
 import { mainStore } from "@/store";
 import { Error } from "@icon-park/vue-next";
-import { ElMessage } from "element-plus";
 
 const store = mainStore();
 const bgUrl = ref(null);
 const imgTimeout = ref(null);
 const emit = defineEmits(["loadComplete"]);
 
-// 读取环境变量中的 Token（部署时注入，本地写在 .env.local）
-const IMG_BED_TOKEN = import.meta.env.VITE_IMGBED_TOKEN || "";
-
 // 壁纸随机数
-const bgRandom = Math.floor(Math.random() * 9 + 1);
+// 请依据文件夹内的图片个数修改 Math.random() 后面的第一个数字
+const bgRandom = Math.floor(Math.random() * 30 + 1);
 
-// 更换壁纸链接（异步函数，严格适配 API 文档）
-const changeBg = async (type) => {
-  // 重置加载状态，优化体验
-  store.setImgLoadStatus(false);
-  
+// 更换壁纸链接
+const changeBg = (type) => {
   if (type == 0) {
     bgUrl.value = `/images/background${bgRandom}.jpg`;
   } else if (type == 1) {
@@ -56,51 +48,6 @@ const changeBg = async (type) => {
     bgUrl.value = "https://api.btstu.cn/sjbz/?lx=fengjing&format=images";
   } else if (type == 3) {
     // 彼岸壁纸-动漫类
-    bgUrl.value = "https://api.btstu.cn/sjbz/?lx=dongman&format=images";
-  } else if (type == 4) {
-    // 无 Token 时兜底提示
-    if (!IMG_BED_TOKEN) {
-      ElMessage({
-        message: "未配置图片床 Token，已切换默认壁纸",
-        type: "warning",
-        icon: h(Error, { theme: "filled", fill: "#efefef" }),
-      });
-      bgUrl.value = `/images/background${bgRandom}.jpg`;
-      return;
-    }
-
-    // 严格按 API 文档构造请求
-    const apiUrl = new URL("https://tu.fqzlr.top/random");
-    // 设置文档要求的参数
-    apiUrl.searchParams.set("type", "img"); // 直接返回图片流（核心）
-    apiUrl.searchParams.set("orientation", "auto"); // 自适应设备方向
-    apiUrl.searchParams.set("content", "image"); // 仅返回图片类型
-
-    try {
-      const response = await fetch(apiUrl.toString(), {
-        method: "GET",
-        headers: {
-          "Authorization": IMG_BED_TOKEN, // 鉴权头（文档要求）
-          // 携带视口信息，让 auto 方向更精准
-          "Sec-CH-Viewport-Width": window.innerWidth.toString(),
-          "Sec-CH-Viewport-Height": window.innerHeight.toString(),
-        },
-      });
-
-      if (!response.ok) throw new Error(`请求失败：${response.status}`);
-
-      // 直接转为 Blob URL 赋值（符合文档 <img> 直接使用的场景）
-      const blob = await response.blob();
-      bgUrl.value = URL.createObjectURL(blob);
-    } catch (error) {
-      console.error("自定义随机图加载失败：", error);
-      bgUrl.value = `/images/background${bgRandom}.jpg`;
-      ElMessage({
-        message: "自定义壁纸加载失败，已切换回默认",
-        icon: h(Error, { theme: "filled", fill: "#efefef" }),
-      });
-    }
-  }
 };
 
 // 图片加载完成
@@ -220,18 +167,6 @@ onBeforeUnmount(() => {
     &:active {
       transform: scale(1);
     }
-  }
-}
-
-// 补全缺失的动画定义
-@keyframes fade-blur-in {
-  from {
-    filter: blur(40px) brightness(0);
-    opacity: 0;
-  }
-  to {
-    filter: blur(20px) brightness(0.3);
-    opacity: 1;
   }
 }
 </style>
