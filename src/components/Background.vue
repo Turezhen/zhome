@@ -46,8 +46,10 @@ const changeBg = (type) => {
   } else if (type == 2) {
     // 彼岸壁纸-风景类
     bgUrl.value = "https://api.btstu.cn/sjbz/?lx=fengjing&format=images";
-  } else if (type == 3) 
+  } else if (type == 3)  {
     // 彼岸壁纸-动漫类
+    bgUrl.value = "https://api.btstu.cn/sjbz/?lx=dongman&format=images";
+  }
 };
 
 // 图片加载完成

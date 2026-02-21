@@ -2,23 +2,23 @@
   {
     "icon": "Blog",
     "name": "博客",
-    "link": "https://bk.682000.xyz/"
+    "link": "https://fqzlr.top"
   },
   {
     "icon": "Book",
     "name": "笔记",
-    "link": "https://bj.682000.xyz/"
+    "link": "https://bj.fqzlr.top/"
 
-  },
-  {
-    "icon": "CompactDisc",
-    "name": "无",
-    "link": ""
   },
   {
     "icon": "Compass",
     "name": "起始页",
-    "link": "https://home.682000.xyz/"
+    "link": "https://home.fqzlr.top/"
+  },
+    {
+    "icon": "CompactDisc",
+    "name": "无",
+    "link": ""
   },
   {
     "icon": "Cloud",
