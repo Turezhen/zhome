@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-// 补全Vue核心API和必要组件导入（避免运行报错）
+// 补全所有必要的导入
 import { ref, watch, onMounted, onBeforeUnmount, h } from "vue";
 import { mainStore } from "@/store";
 import { Error } from "@icon-park/vue-next";
@@ -35,43 +35,33 @@ const bgUrl = ref(null);
 const imgTimeout = ref(null);
 const emit = defineEmits(["loadComplete"]);
 
-// 【安全核心】从Vite环境变量读取Token，代码中无硬编码（部署时注入）
+// 读取环境变量中的 Token（部署时注入，本地写在 .env.local）
 const IMG_BED_TOKEN = import.meta.env.VITE_IMGBED_TOKEN || "";
-// 适配你的图床域名：https://tu.fqzlr.top/
-const IMG_BED_BASE_URL = "https://tu.fqzlr.top";
-// 适配API文档的参数：type=img直接返回图片、auto自适应方向
-const IMG_API_PARAMS = {
-  type: "img",        // 必选：直接返回图片流（无需解析JSON）
-  orientation: "auto",// 自适应设备方向（桌面横图/手机竖图）
-  content: "image"    // 只返回图片（过滤视频）
-};
 
-// 拼接带参数的API请求地址
-const getRandomImgUrl = () => {
-  const params = new URLSearchParams(IMG_API_PARAMS);
-  return `${IMG_BED_BASE_URL}/random?${params.toString()}`;
-};
-
-// 本地壁纸随机数
+// 壁纸随机数
 const bgRandom = Math.floor(Math.random() * 9 + 1);
 
-// 更换壁纸逻辑（异步+鉴权+容错）
+// 更换壁纸链接（异步函数，支持 API 鉴权）
 const changeBg = async (type) => {
+  // 重置加载状态，优化体验
   store.setImgLoadStatus(false);
   
-  if (type === 0) {
+  if (type == 0) {
     bgUrl.value = `/images/background${bgRandom}.jpg`;
-  } else if (type === 1) {
+  } else if (type == 1) {
+    // 必应壁纸接口（稳定）
     bgUrl.value = "https://api.dujin.org/bing/1920.php";
-  } else if (type === 2) {
+  } else if (type == 2) {
+    // 彼岸壁纸-风景类
     bgUrl.value = "https://api.btstu.cn/sjbz/?lx=fengjing&format=images";
-  } else if (type === 3) {
+  } else if (type == 3) {
+    // 彼岸壁纸-动漫类
     bgUrl.value = "https://api.btstu.cn/sjbz/?lx=dongman&format=images";
-  } else if (type === 4) {
-    // 无Token时兜底（避免报错）
+  } else if (type == 4) {
+    // 无 Token 时兜底提示
     if (!IMG_BED_TOKEN) {
       ElMessage({
-        message: "未配置图片床Token，已切换默认壁纸",
+        message: "未配置图片床 Token，已切换默认壁纸",
         type: "warning",
         icon: h(Error, { theme: "filled", fill: "#efefef" }),
       });
@@ -79,26 +69,31 @@ const changeBg = async (type) => {
       return;
     }
 
+    // 带鉴权调用自定义随机图 API
     try {
-      // 带鉴权请求你的随机图API
-      const response = await fetch(getRandomImgUrl(), {
+      const response = await fetch("https://tu.fqzlr.top/random", {
         method: "GET",
         headers: {
-          "Authorization": IMG_BED_TOKEN, // 按API文档设置鉴权头
-          // 携带视口信息，让API精准判断设备方向
-          "Sec-CH-Viewport-Width": window.innerWidth.toString(),
-          "Sec-CH-Viewport-Height": window.innerHeight.toString(),
+          // 按 CloudFlare ImgBed API 文档设置鉴权头
+          "Authorization": IMG_BED_TOKEN,
+          "Accept": "image/*",
         },
       });
 
-      if (!response.ok) throw new Error(`请求失败：${response.status}`);
-      
-      // 转为Blob URL（替代Base64，更高效）
+      if (!response.ok) {
+        throw new Error(`API 请求失败：${response.status}`);
+      }
+
+      // 将图片转为 Base64（解决 img 标签无法设置请求头的问题）
       const blob = await response.blob();
-      bgUrl.value = URL.createObjectURL(blob);
+      const reader = new FileReader();
+      reader.onload = () => {
+        bgUrl.value = reader.result; // Base64 字符串作为 img.src
+      };
+      reader.readAsDataURL(blob);
     } catch (error) {
       console.error("自定义随机图加载失败：", error);
-      // 失败兜底：切回本地壁纸
+      // 失败兜底
       bgUrl.value = `/images/background${bgRandom}.jpg`;
       ElMessage({
         message: "自定义壁纸加载失败，已切换回默认",
@@ -108,39 +103,52 @@ const changeBg = async (type) => {
   }
 };
 
-// 图片加载完成处理
+// 图片加载完成
 const imgLoadComplete = () => {
   imgTimeout.value = setTimeout(
-    () => store.setImgLoadStatus(true),
-    Math.floor(Math.random() * (600 - 300 + 1)) + 300
+    () => {
+      store.setImgLoadStatus(true);
+    },
+    Math.floor(Math.random() * (600 - 300 + 1)) + 300,
   );
 };
 
 // 图片动画完成
 const imgAnimationEnd = () => {
   console.log("壁纸加载且动画完成");
+  // 加载完成事件
   emit("loadComplete");
 };
 
-// 图片加载失败兜底
+// 图片显示失败
 const imgLoadError = () => {
   console.error("壁纸加载失败：", bgUrl.value);
   ElMessage({
     message: "壁纸加载失败，已临时切换回默认",
-    icon: h(Error, { theme: "filled", fill: "#efefef" }),
+    icon: h(Error, {
+      theme: "filled",
+      fill: "#efefef",
+    }),
   });
   bgUrl.value = `/images/background${bgRandom}.jpg`;
 };
 
-// 监听壁纸类型切换
-watch(() => store.coverType, (value) => changeBg(value));
-// 监听窗口大小变化，重新加载自适应方向的图片
-watch([() => window.innerWidth, () => window.innerHeight], () => {
-  if (store.coverType === 4) changeBg(4);
-}, { deep: true });
+// 监听壁纸切换
+watch(
+  () => store.coverType,
+  (value) => {
+    changeBg(value);
+  },
+);
 
-onMounted(() => changeBg(store.coverType));
-onBeforeUnmount(() => clearTimeout(imgTimeout.value));
+onMounted(() => {
+  // 加载壁纸
+  changeBg(store.coverType);
+});
+
+onBeforeUnmount(() => {
+  clearTimeout(imgTimeout.value);
+});
 </script>
 
 <style lang="scss" scoped>
@@ -166,11 +174,12 @@ onBeforeUnmount(() => clearTimeout(imgTimeout.value));
     object-fit: cover;
     backface-visibility: hidden;
     filter: blur(20px) brightness(0.3);
-    transition: filter 0.3s, transform 0.3s;
+    transition:
+      filter 0.3s,
+      transform 0.3s;
     animation: fade-blur-in 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     animation-delay: 0.45s;
   }
-
   .gray {
     opacity: 1;
     position: absolute;
@@ -178,17 +187,15 @@ onBeforeUnmount(() => clearTimeout(imgTimeout.value));
     top: 0;
     width: 100%;
     height: 100%;
-    background-image: 
-      radial-gradient(rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0.5) 100%),
+    background-image: radial-gradient(rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0.5) 100%),
       radial-gradient(rgba(0, 0, 0, 0) 33%, rgba(0, 0, 0, 0.3) 166%);
-    transition: 1.5s;
 
+    transition: 1.5s;
     &.hidden {
       opacity: 0;
       transition: 1.5s;
     }
   }
-
   .down {
     font-size: 16px;
     color: white;
@@ -197,28 +204,26 @@ onBeforeUnmount(() => clearTimeout(imgTimeout.value));
     left: 0;
     right: 0;
     margin: 0 auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 120px;
-    height: 30px;
+    display: block;
     padding: 20px 26px;
     border-radius: 8px;
     background-color: #00000030;
-    text-decoration: none;
-
+    width: 120px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     &:hover {
       transform: scale(1.05);
       background-color: #00000060;
     }
-
     &:active {
       transform: scale(1);
     }
   }
 }
 
-// 补全动画定义（避免样式失效）
+// 补全缺失的动画定义
 @keyframes fade-blur-in {
   from {
     filter: blur(40px) brightness(0);
