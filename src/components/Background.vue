@@ -41,11 +41,26 @@ const changeBg = (type) => {
   if (type == 0) {
     bgUrl.value = `/images/background${bgRandom}.jpg`;
   } else if (type == 1) {
+    // 必应壁纸接口（稳定）
     bgUrl.value = "https://api.dujin.org/bing/1920.php";
   } else if (type == 2) {
-    bgUrl.value = "https://api.vvhan.com/api/wallpaper/views";
+    // 替换失效的 views 接口：改用彼岸壁纸-风景类（稳定）
+    bgUrl.value = "https://api.btstu.cn/sjbz/?lx=fengjing&format=images";
   } else if (type == 3) {
-    bgUrl.value = "https://api.vvhan.com/api/wallpaper/acg";
+    // 替换失效的 acg 接口：改用彼岸壁纸-动漫类（稳定）
+    bgUrl.value = "https://api.btstu.cn/sjbz/?lx=dongman&format=images";
+  } else if (type == 4) {
+    // 你的自定义随机图接口
+    try {
+      bgUrl.value = "https://fqzlr.top/random";
+    } catch (error) {
+      console.error("自定义随机图接口调用失败：", error);
+      bgUrl.value = `/images/background${bgRandom}.jpg`;
+      ElMessage({
+        message: "自定义壁纸加载失败，已切换回默认",
+        icon: h(Error, { theme: "filled", fill: "#efefef" }),
+      });
+    }
   }
 };
 
