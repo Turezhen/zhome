@@ -41,12 +41,13 @@ const changeBg = (type) => {
   if (type == 0) {
     bgUrl.value = `/images/background${bgRandom}.jpg`;
   } else if (type == 1) {
+    // 必应壁纸接口（稳定）
     bgUrl.value = "https://api.dujin.org/bing/1920.php";
   } else if (type == 2) {
-    bgUrl.value = "https://api.vvhan.com/api/wallpaper/views";
-  } else if (type == 3) {
-    bgUrl.value = "https://api.vvhan.com/api/wallpaper/acg";
-  }
+    // 彼岸壁纸-风景类
+    bgUrl.value = "https://api.btstu.cn/sjbz/?lx=fengjing&format=images";
+  } else if (type == 3) 
+    // 彼岸壁纸-动漫类
 };
 
 // 图片加载完成
