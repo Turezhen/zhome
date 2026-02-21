@@ -23,3 +23,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 环境变量文件
+.env.local
+.env.*.local
+# 其他默认忽略项（已有的话不用加）
+node_modules/
+dist/
+.DS_Store
