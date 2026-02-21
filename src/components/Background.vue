@@ -41,7 +41,7 @@ const IMG_BED_TOKEN = import.meta.env.VITE_IMGBED_TOKEN || "";
 // 壁纸随机数
 const bgRandom = Math.floor(Math.random() * 9 + 1);
 
-// 更换壁纸链接（异步函数，支持 API 鉴权）
+// 更换壁纸链接（异步函数，严格适配 API 文档）
 const changeBg = async (type) => {
   // 重置加载状态，优化体验
   store.setImgLoadStatus(false);
@@ -69,31 +69,31 @@ const changeBg = async (type) => {
       return;
     }
 
-    // 带鉴权调用自定义随机图 API
+    // 严格按 API 文档构造请求
+    const apiUrl = new URL("https://tu.fqzlr.top/random");
+    // 设置文档要求的参数
+    apiUrl.searchParams.set("type", "img"); // 直接返回图片流（核心）
+    apiUrl.searchParams.set("orientation", "auto"); // 自适应设备方向
+    apiUrl.searchParams.set("content", "image"); // 仅返回图片类型
+
     try {
-      const response = await fetch("https://tu.fqzlr.top/random", {
+      const response = await fetch(apiUrl.toString(), {
         method: "GET",
         headers: {
-          // 按 CloudFlare ImgBed API 文档设置鉴权头
-          "Authorization": IMG_BED_TOKEN,
-          "Accept": "image/*",
+          "Authorization": IMG_BED_TOKEN, // 鉴权头（文档要求）
+          // 携带视口信息，让 auto 方向更精准
+          "Sec-CH-Viewport-Width": window.innerWidth.toString(),
+          "Sec-CH-Viewport-Height": window.innerHeight.toString(),
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`API 请求失败：${response.status}`);
-      }
+      if (!response.ok) throw new Error(`请求失败：${response.status}`);
 
-      // 将图片转为 Base64（解决 img 标签无法设置请求头的问题）
+      // 直接转为 Blob URL 赋值（符合文档 <img> 直接使用的场景）
       const blob = await response.blob();
-      const reader = new FileReader();
-      reader.onload = () => {
-        bgUrl.value = reader.result; // Base64 字符串作为 img.src
-      };
-      reader.readAsDataURL(blob);
+      bgUrl.value = URL.createObjectURL(blob);
     } catch (error) {
       console.error("自定义随机图加载失败：", error);
-      // 失败兜底
       bgUrl.value = `/images/background${bgRandom}.jpg`;
       ElMessage({
         message: "自定义壁纸加载失败，已切换回默认",
